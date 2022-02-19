@@ -1,10 +1,3 @@
-//
-//  SceneDelegate.swift
-//  TravelApp
-//
-//  Created by Akuev Ruslan on 03.02.2022.
-//
-
 import UIKit
 
 class SceneDelegate: UIResponder, UIWindowSceneDelegate {
@@ -50,4 +43,3 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
 
 
 }
-
