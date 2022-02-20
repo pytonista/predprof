@@ -1,7 +1,13 @@
-
-
 import UIKit
 import AVFoundation
+import Alamofire
+var text:UITextView = UITextView()
+
+public struct Answer :  Decodable {
+   public let name:String
+   public let wiki:String
+   public let perc:String
+}
 class ViewController: UIViewController {
     //Capture selection
     var session: AVCaptureSession?
@@ -17,7 +23,7 @@ class ViewController: UIViewController {
         button.layer.borderColor = UIColor.white.cgColor
         return button
     }()
-    
+
     
     override func viewDidLoad(){
         super.viewDidLoad()
@@ -92,6 +98,28 @@ class ViewController: UIViewController {
 }
 
 extension ViewController: AVCapturePhotoCaptureDelegate{
+    func showAlert(_ answer : Answer?) {
+        // customise your view
+        if answer == nil{
+            return
+        }
+         text = UITextView(frame: CGRect(x: 10, y: 200, width: 400, height: 400))
+         text.text = answer!.name + " " + answer!.perc + "\n" + answer!.wiki
+          text.textColor = UIColor.black
+        text.backgroundColor = UIColor.white.withAlphaComponent(0.5)
+        text.font = text.font?.withSize(30)
+        // show on screen
+        self.view.addSubview(text)
+
+        // set the timer
+        Timer.scheduledTimer(timeInterval: 3.0, target: self, selector: #selector(dismissAlert), userInfo: nil, repeats: false)
+      }
+
+      @objc func dismissAlert(){
+        if text != nil { // Dismiss the view from here
+          text.removeFromSuperview()
+        }
+      }
     func photoOutput(_ output: AVCapturePhotoOutput, didFinishProcessingPhoto photo: AVCapturePhoto, error: Error?) {
         guard let data = photo.fileDataRepresentation() else{
             return
@@ -101,17 +129,33 @@ extension ViewController: AVCapturePhotoCaptureDelegate{
         //session?.stopRunning()
         
         let imageView = UIImageView(image: image)
+        let imageViewr = UIImageView(image: image)
         imageView.contentMode = .scaleAspectFill
         imageView.frame = view.bounds
         view.addSubview(imageView)
         
         DispatchQueue.main.asyncAfter(deadline: .now() + .seconds(2), execute: {
             imageView.removeFromSuperview()
+            let headers: HTTPHeaders =
+                    ["Content-type": "multipart/form-data",
+                    "Accept": "application/json"]
+            
+
+            
+            AF.upload(
+                        multipartFormData: { multipartFormData in
+                            multipartFormData.append(image!.jpegData(compressionQuality: 0.5)!, withName: "photo" , fileName: "file.jpeg", mimeType: "image/jpeg")
+                    },
+                        to: "/api/v1/ai", method: .post , headers: headers)
+                .responseDecodable(of: Answer.self) { resp in
+                    self.showAlert(resp.value)
+                           
+                    }
+            
         })
         
         
         
         
     }
-    
 }
